@@ -1,6 +1,7 @@
 /*
  * 日期：2023.7.22
  * 开环速度控制代码
+ * 使用vofa+ 进行串口调试，波特率需要设置为9600
  */
 #include <Arduino.h>
 
@@ -11,7 +12,7 @@ const char pwmC = 25;
 
 const float voltagePowerSupply = 12.6;
 float open_loop_timestamp = 0;
-float shaft_angle = 0;
+float shaft_angle = 0; // 机械角度
 float zero_electric_angle = 0;
 float Ualpha, Ubeta = 0;
 float Ua = 0, Ub = 0, Uc = 0;
@@ -19,7 +20,7 @@ float dc_a = 0, dc_b = 0, dc_c = 0;
 
 void setup()
 {
-    Serial.begin(115200);
+    Serial.begin(9600);
 
     // PWM设置
     pinMode(pwmA, OUTPUT);
@@ -52,8 +53,7 @@ float _normalizeAngle(float angle)
 void setPwm(float Ua, float Ub, float Uc)
 {
 
-    // 计算占空比
-    // 限制占空比从0到1
+    // 计算占空比，限制占空比从0到1
     dc_a = constrain(Ua / voltagePowerSupply, 0.0f, 1.0f);
     dc_b = constrain(Ub / voltagePowerSupply, 0.0f, 1.0f);
     dc_c = constrain(Uc / voltagePowerSupply, 0.0f, 1.0f);
@@ -67,8 +67,8 @@ void setPwm(float Ua, float Ub, float Uc)
 // 核心公式
 void setPhaseVoltage(float Uq, float Ud, float angle_el)
 {
-    angle_el = _normalizeAngle(angle_el + zero_electric_angle);  // 机械角度
-    
+    angle_el = _normalizeAngle(angle_el + zero_electric_angle); // 电角度
+
     // 帕克逆变换
     Ualpha = -Uq * sin(angle_el);
     Ubeta = Uq * cos(angle_el);
@@ -101,14 +101,20 @@ float velocityOpenloop(float target_velocity)
     // 最大只能设置为Uq = voltage_power_supply/2，否则ua,ub,uc会超出供电电压限幅
     float Uq = voltagePowerSupply / 3;
 
-    setPhaseVoltage(Uq, 0, _electricalAngle(shaft_angle, 7));  // 极对数可以设置为常量
+    setPhaseVoltage(Uq, 0, _electricalAngle(shaft_angle, 7)); // 极对数可以设置为常量
 
     open_loop_timestamp = now_us; // 用于计算下一个时间间隔
 
     return Uq;
 }
 
+void debug()
+{
+    Serial.printf("%f,%f,%f\n", dc_a, dc_b, dc_c);
+}
+
 void loop()
 {
-    velocityOpenloop(10);
+    velocityOpenloop(30);
+    debug();
 }
