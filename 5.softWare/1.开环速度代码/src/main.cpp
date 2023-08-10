@@ -2,13 +2,16 @@
  * 日期：2023.7.22
  * 开环速度控制代码
  * 使用vofa+ 进行串口调试，波特率需要设置为9600
+ * 电机A2212/15T的极对数：7
  */
 #include <Arduino.h>
 
+const int poles = 6;  // 电机的极对数
+
 // PWM输出引脚定义
-const char pwmA = 32;
-const char pwmB = 33;
-const char pwmC = 25;
+const char pwmA = 5;
+const char pwmB = 18;
+const char pwmC = 19;
 
 const float voltagePowerSupply = 12.6;
 float open_loop_timestamp = 0;
@@ -101,7 +104,7 @@ float velocityOpenloop(float target_velocity)
     // 最大只能设置为Uq = voltage_power_supply/2，否则ua,ub,uc会超出供电电压限幅
     float Uq = voltagePowerSupply / 3;
 
-    setPhaseVoltage(Uq, 0, _electricalAngle(shaft_angle, 7)); // 极对数可以设置为常量
+    setPhaseVoltage(Uq, 0, _electricalAngle(shaft_angle, poles)); // 极对数可以设置为常量
 
     open_loop_timestamp = now_us; // 用于计算下一个时间间隔
 
@@ -115,6 +118,6 @@ void debug()
 
 void loop()
 {
-    velocityOpenloop(30);
-    debug();
+    velocityOpenloop(10);
+    // debug();
 }
