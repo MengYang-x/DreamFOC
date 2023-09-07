@@ -10,7 +10,8 @@ int pwmC = 25;
 // 宏定义实现的一个约束函数,用于限制一个值的范围。
 // 具体来说，该宏定义的名称为 _constrain，接受三个参数 amt、low 和 high，分别表示要限制的值、最小值和最大值。该宏定义的实现使用了三元运算符，根据 amt 是否小于 low 或大于 high，返回其中的最大或最小值，或者返回原值。
 // 换句话说，如果 amt 小于 low，则返回 low；如果 amt 大于 high，则返回 high；否则返回 amt。这样，_constrain(amt, low, high) 就会将 amt 约束在 [low, high] 的范围内。
-float voltage_power_supply = 12.6;
+float voltage_power_supply = 12.6; // 供电电压
+float voltage_limit = 10;
 float shaft_angle = 0, open_loop_timestamp = 0;
 float zero_electric_angle = 0, Ualpha, Ubeta = 0, Ua = 0, Ub = 0, Uc = 0, dc_a = 0, dc_b = 0, dc_c = 0;
 
@@ -35,7 +36,7 @@ void setup()
 // 电角度求解
 float _electricalAngle(float shaft_angle, int pole_pairs)
 {
-    return (shaft_angle * pole_pairs);
+    return (shaft_angle * pole_pairs); // 电角度 = 机械角度 * 极对数
 }
 
 // 归一化角度到 [0,2PI]
@@ -52,8 +53,11 @@ float _normalizeAngle(float angle)
 // 设置PWM到控制器输出
 void setPwm(float Ua, float Ub, float Uc)
 {
+    // 电压限幅
+    Ua = _constrain(Ua, 0.0f, voltage_limit);
+    Ub = _constrain(Ua, 0.0f, voltage_limit);
+    Uc = _constrain(Ua, 0.0f, voltage_limit);
 
-    // 计算占空比
     // 限制占空比从0到1
     dc_a = _constrain(Ua / voltage_power_supply, 0.0f, 1.0f);
     dc_b = _constrain(Ub / voltage_power_supply, 0.0f, 1.0f);
@@ -79,7 +83,7 @@ void setPhaseVoltage(float Uq, float Ud, float angle_el)
     setPwm(Ua, Ub, Uc);
 }
 
-// 开环速度函数
+// 开环速度函数，目标速度rad/s
 float velocityOpenloop(float target_velocity)
 {
     unsigned long now_us = micros(); // 获取从开启芯片以来的微秒数，它的精度是 4 微秒。 micros() 返回的是一个无符号长整型（unsigned long）的值

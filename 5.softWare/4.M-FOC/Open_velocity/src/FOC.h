@@ -20,6 +20,7 @@ private:
     float sum;
 
 public:
+    // void FOC_init();
     void Inv_Park(float u_q, float u_d, float theta); // Park逆变换
     void SVPWM();                                     // 计算矢量作用时间
 

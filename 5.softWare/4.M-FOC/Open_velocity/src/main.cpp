@@ -1,4 +1,4 @@
-// FOC开环速度测试
+// FOC开环速度代码
 #include <Arduino.h>
 #include "FOC.h"
 
